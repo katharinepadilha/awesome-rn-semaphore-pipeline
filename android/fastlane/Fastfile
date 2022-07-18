@@ -1,0 +1,25 @@
+default_platform(:android)g
+
+platform :android do
+  
+  desc "Build the app"
+  lane :build do
+    gradle(task: "clean assembleRelease")
+  end
+
+  desc "Deploy a new version to the Google Play"
+  lane :deploy do
+
+    currentBuildNumber = 0
+    nextBuildNumber = currentBuildNumber[0] + 1
+    increment_version_code(version_code: nextBuildNumber)
+    increment_version_name(
+      gradle_file_path: "./app/build.gradle",
+      version_name: ENV["VERSION_NUMBER"]
+    )
+
+    gradle(task: "clean bundleRelease")
+
+    # upload_to_play_store
+  end
+end

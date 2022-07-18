@@ -29,7 +29,7 @@ build/
 local.properties
 *.iml
 *.hprof
-
+android/vendor
 # node.js
 #
 node_modules/
