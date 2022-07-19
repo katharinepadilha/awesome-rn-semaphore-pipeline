@@ -1,0 +1,52 @@
+default_platform(:ios)
+
+before_all do
+  setup_semaphore
+end
+
+ENV["KEYCHAIN_NAME"] = "keychain"
+ENV["KEYCHAIN_PASSWORD"] = "password"
+ENV["VERSION_NUMBER"] = "1.0.0"
+
+platform :ios do
+
+  desc "Build iOS project"
+  lane :build do
+
+    create_keychain(
+      name: ENV["KEYCHAIN_NAME"],
+      password: ENV["KEYCHAIN_PASSWORD"],
+      default_keychain: is_ci,
+      unlock: true,
+      timeout: 3600,
+      lock_when_sleeps: false
+    )
+
+    # match
+
+    gym(
+      workspace: "AwesomeSemaphorePipeline.xcworkspace",
+      scheme: "AwesomeSemaphorePipeline",
+      export_method: "app-store",
+      configuration: "Release",
+      skip_archive: true, # remove this on your app
+      skip_codesigning: true # remove this on your app
+    )
+
+  end
+
+  lane :deploy do
+
+    currentBuildNumber = 0
+    nextBuildNumber = currentBuildNumber + 1
+		
+    increment_build_number(build_number: nextBuildNumber)
+    increment_version_number(version_number: ENV["VERSION_NUMBER"])
+
+	  build
+
+    # upload_to_testflight
+
+  end
+
+end
