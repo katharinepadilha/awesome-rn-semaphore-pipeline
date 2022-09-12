@@ -4,6 +4,15 @@ agent:
   machine:
     type: e1-standard-2
     os_image: ubuntu2004
+
+fail_fast:
+  stop:
+    when: 'true'
+
+auto_cancel:
+  running:
+    when: "branch != 'main'"
+
 blocks:
   - name: Install Dependencies
     task:
@@ -26,3 +35,8 @@ blocks:
         - name: Unit tests
           commands:
             - yarn test
+promotions:
+  - name: Release
+    pipeline_file: deploy.yml
+    auto_promote:
+      when: result = 'passed' and branch = 'main'

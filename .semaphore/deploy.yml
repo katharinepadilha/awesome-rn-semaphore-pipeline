@@ -1,0 +1,82 @@
+version: v1.0
+name: 'Deploy'
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+
+blocks:
+  - name: Generate Release
+    dependencies: []
+    task:
+      secrets:
+        - name: awesome-rn-semaphore-pipeline-secret
+      jobs:
+        - name: Run Semantic Release
+          commands:
+            - checkout
+            - cache restore
+
+            - VERSION=$(npx semantic-release --dry-run | grep 'The next release version is' | sed -E 's/.* ([[:digit:].]+)$/\1/')
+            - echo $VERSION >> version.txt
+            - artifact push workflow version.txt
+
+            - npx semantic-release
+  - name: Deploy iOS
+    dependencies:
+      - Generate Release
+    task:
+      agent:
+        machine:
+          type: a1-standard-4
+          os_image: macos-xcode13
+      env_vars:
+        - name: LANG
+          value: en_US.UTF-8
+      prologue:
+        commands:
+          - sem-version ruby 2.7.4
+          - sem-version node 16
+          - sudo gem install cocoapods
+
+          - checkout
+          - yarn
+
+          - bundle install --path vendor/bundle
+          - cd ios && bundle install --path vendor/bundle && cd ..
+          - cd ios && pod install && cd ..
+
+      jobs:
+        - name: Fastlane build
+          commands:
+            - artifact pull workflow version.txt
+            - VERSION=$(cat version.txt)
+            - export VERSION_NUMBER=$VERSION
+
+            - cd ios && bundle exec fastlane ios deploy
+  - name: Deploy Android
+    dependencies:
+      - Generate Release
+    task:
+      agent:
+        machine:
+          type: e1-standard-2
+        containers:
+          - name: main
+            image: 'registry.semaphoreci.com/android:30-node'
+      env_vars:
+        - name: LANG
+          value: en_US.UTF-8
+      prologue:
+        commands:
+          - checkout
+          - cd android && bundle install --path vendor/bundle && cd ..
+
+      jobs:
+        - name: Fastlane build
+          commands:
+            - artifact pull workflow version.txt
+            - VERSION=$(cat version.txt)
+            - export VERSION_NUMBER=$VERSION
+
+            - cd android && bundle exec fastlane android deploy

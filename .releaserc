@@ -7,7 +7,8 @@
     "access": "restricted"
   },
   "branches": [
-    "main"
+    "main",
+    "feature/set-up-semaphore"
   ],
   "tagFormat": "${version}",
   "plugins": [
