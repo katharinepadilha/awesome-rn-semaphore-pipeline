@@ -6,7 +6,7 @@ end
 
 ENV["KEYCHAIN_NAME"] = "keychain"
 ENV["KEYCHAIN_PASSWORD"] = "password"
-ENV["VERSION_NUMBER"] = "1.0.0"
+# ENV["VERSION_NUMBER"] = "1.0.0"
 
 platform :ios do
 
