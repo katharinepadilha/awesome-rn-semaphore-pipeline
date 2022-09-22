@@ -1,0 +1,42 @@
+version: v1.0
+name: Initial Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+
+fail_fast:
+  stop:
+    when: 'true'
+
+auto_cancel:
+  running:
+    when: "branch != 'main'"
+
+blocks:
+  - name: Install Dependencies
+    task:
+      jobs:
+        - name: Yarn install and cache
+          commands:
+            - checkout
+            - yarn
+            - cache store
+  - name: Testing
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore
+      jobs:
+        - name: Lint
+          commands:
+            - yarn eslint
+        - name: Unit tests
+          commands:
+            - yarn test
+promotions:
+  - name: Release
+    pipeline_file: deploy.yml
+    auto_promote:
+      when: result = 'passed' and branch = 'main'
